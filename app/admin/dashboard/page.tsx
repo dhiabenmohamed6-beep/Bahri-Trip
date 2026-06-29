@@ -253,12 +253,14 @@ function BannerModal({ current, onSave, onClose }: {
   const [form, setForm]         = useState<BannerSettings>(current)
   const [cropSrc, setCropSrc]   = useState<string|null>(null)
   const fileRef                 = useRef<HTMLInputElement>(null)
+  const folderRef               = useRef<HTMLInputElement>(null)
 
   function f(k: keyof BannerSettings, v: string) { setForm(p=>({...p,[k]:v})) }
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const files = e.target.files
+    if (!files || files.length === 0) return
+    const file = Array.from(files).find(f => f.type.startsWith('image/')) || files[0]
     const reader = new FileReader()
     reader.onload = ev => setCropSrc(ev.target?.result as string)
     reader.readAsDataURL(file)
@@ -300,10 +302,16 @@ function BannerModal({ current, onSave, onClose }: {
               <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">Background Image</label>
               <div className="flex gap-2 mb-2">
                 <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
+                <input ref={folderRef} type="file" accept="image/*" webkitdirectory="true" directory="" onChange={handleFile} className="hidden" />
                 <button onClick={()=>fileRef.current?.click()}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 flex-shrink-0"
+                  className="hidden md:flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 flex-shrink-0"
                   style={{ background:'linear-gradient(135deg,#1e3a4c,#0a3d4f)' }}>
                   📁 Choose File
+                </button>
+                <button onClick={()=>folderRef.current?.click()}
+                  className="md:hidden flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 flex-shrink-0"
+                  style={{ background:'linear-gradient(135deg,#1e3a4c,#0a3d4f)' }}>
+                  📁 Choose Folder
                 </button>
                 <input value={form.imageUrl.startsWith('data:') ? '(local image)' : form.imageUrl}
                   onChange={e=>{ if(!e.target.value.startsWith('data:')) f('imageUrl',e.target.value) }}
