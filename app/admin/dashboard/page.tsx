@@ -253,19 +253,19 @@ function BannerModal({ current, onSave, onClose }: {
   const [form, setForm]         = useState<BannerSettings>(current)
   const [cropSrc, setCropSrc]   = useState<string|null>(null)
   const [cropTarget, setCropTarget] = useState<'imageUrl' | 'phoneImageUrl'>('imageUrl')
-  const fileRef                 = useRef<HTMLInputElement>(null)
-  const phoneFileRef            = useRef<HTMLInputElement>(null)
+  const desktopInputRef = useRef<HTMLInputElement>(null)
+  const phoneInputRef   = useRef<HTMLInputElement>(null)
 
   function f(k: keyof BannerSettings, v: string) { setForm(p=>({...p,[k]:v})) }
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = e.target.files
-    if (!files || files.length === 0) return
-    const file = Array.from(files).find(f => f.type.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(f.name)) || files[0]
+    const file = e.target.files?.[0]
+    if (!file) return
     const reader = new FileReader()
     reader.onload = ev => setCropSrc(ev.target?.result as string)
     reader.onerror = () => alert('Could not read this file. Please try another image.')
     reader.readAsDataURL(file)
+    e.target.value = ''
   }
 
   function handleCropDone(dataUrl: string) {
@@ -299,15 +299,15 @@ function BannerModal({ current, onSave, onClose }: {
           </div>
 
           <div className="flex flex-col gap-4">
-            {/* Image upload + URL */}
+            {/* Desktop / Laptop Banner */}
             <div>
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">Background Image</label>
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">Background Image <span className="normal-case tracking-normal">(desktop & laptop)</span></label>
               <div className="flex gap-2 mb-2">
-                <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
-                <button onClick={()=>fileRef.current?.click()}
-                  className="md:flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 flex-shrink-0 hidden"
+                <input ref={desktopInputRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
+                <button onClick={()=>{ setCropTarget('imageUrl'); desktopInputRef.current?.click() }}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 flex-shrink-0"
                   style={{ background:'linear-gradient(135deg,#1e3a4c,#0a3d4f)' }}>
-                  📁 Choose File
+                  📁 Choose Image
                 </button>
                 <input value={form.imageUrl.startsWith('data:') ? '(local image)' : form.imageUrl}
                   onChange={e=>{ if(!e.target.value.startsWith('data:')) f('imageUrl',e.target.value) }}
@@ -316,7 +316,7 @@ function BannerModal({ current, onSave, onClose }: {
               </div>
               {form.imageUrl.startsWith('data:') && (
                 <div className="flex items-center gap-2 text-xs text-green-600 bg-green-50 border border-green-200 rounded-xl px-3 py-2">
-                  ✅ Local image loaded — click <strong>Choose File</strong> again to re-crop
+                  ✅ Local image loaded — click <strong>Choose Image</strong> again to re-crop
                 </div>
               )}
               <p className="text-[10px] text-slate-400 mt-1">Tip: put your photo in <code className="bg-slate-100 px-1 rounded">public/</code> and type <code className="bg-slate-100 px-1 rounded">/filename.jpg</code></p>
@@ -324,12 +324,13 @@ function BannerModal({ current, onSave, onClose }: {
 
             <div className="border-t border-slate-100 my-2" />
 
+            {/* Phone Banner */}
             <div>
               <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">📱 Phone Banner Image <span className="normal-case tracking-normal">(shows only on mobile)</span></label>
               <div className="flex gap-2 mb-2">
-                <input ref={phoneFileRef} type="file" accept="image/*" capture="environment" onChange={handleFile} className="hidden" />
-                <button onClick={()=>{ setCropTarget('phoneImageUrl'); phoneFileRef.current?.click() }}
-                  className="md:hidden flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 flex-shrink-0"
+                <input ref={phoneInputRef} type="file" accept="image/*" capture="environment" onChange={handleFile} className="hidden" />
+                <button onClick={()=>{ setCropTarget('phoneImageUrl'); phoneInputRef.current?.click() }}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 flex-shrink-0"
                   style={{ background:'linear-gradient(135deg,#7c3aed,#6d28d9)' }}>
                   📱 Take Photo / Choose
                 </button>
