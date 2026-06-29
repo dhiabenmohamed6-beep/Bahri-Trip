@@ -248,21 +248,22 @@ export async function getStoredBanner(): Promise<BannerSettings | null> {
   const sb = getSupabase()
   if (!sb) return null
   try {
-    const { data, error } = await sb.from('banner').select('*').order('created_at', { ascending: false }).limit(1).maybeSingle()
-    if (error || !data) return null
+    const { data, error } = await sb.from('banner').select('*').limit(1)
+    const row = data?.[0]
+    if (error || !row) return null
     return {
-      imageUrl: data.image_url,
-      phoneImageUrl: data.phone_image_url ?? '',
-      title: data.title,
-      subtitle: data.subtitle,
-      description: data.description,
-      btnPrimary: data.btn_primary,
-      btnSecondary: data.btn_secondary,
-      phoneTitle: data.phone_title ?? '',
-      phoneSubtitle: data.phone_subtitle ?? '',
-      phoneDescription: data.phone_description ?? '',
-      phoneBtnPrimary: data.phone_btn_primary ?? '',
-    phoneBtnSecondary: data.phone_btn_secondary ?? '',
+      imageUrl: row.image_url,
+      phoneImageUrl: row.phone_image_url ?? '',
+      title: row.title,
+      subtitle: row.subtitle,
+      description: row.description,
+      btnPrimary: row.btn_primary,
+      btnSecondary: row.btn_secondary,
+      phoneTitle: row.phone_title ?? '',
+      phoneSubtitle: row.phone_subtitle ?? '',
+      phoneDescription: row.phone_description ?? '',
+      phoneBtnPrimary: row.phone_btn_primary ?? '',
+      phoneBtnSecondary: row.phone_btn_secondary ?? '',
     }
   } catch {
     return null
@@ -291,13 +292,32 @@ export async function saveStoredBanner(banner: BannerSettings): Promise<void> {
     if (banner.phoneBtnPrimary) data.phone_btn_primary = banner.phoneBtnPrimary
     if (banner.phoneBtnSecondary) data.phone_btn_secondary = banner.phoneBtnSecondary
 
-    const { data: existing } = await sb.from('banner').select('id').order('created_at', { ascending: false }).limit(1).maybeSingle()
+    const { data: existingRows } = await sb.from('banner').select('id').limit(1)
+    const existing = existingRows?.[0]
+    let saveError: any = null
     if (existing?.id) {
       const { error } = await sb.from('banner').update(data).eq('id', existing.id)
-      if (error) throw error
+      saveError = error
     } else {
       const { error } = await sb.from('banner').insert({ ...data, id: 'single' })
-      if (error) throw error
+      saveError = error
+    }
+    if (saveError) {
+      const stripped: any = {
+        image_url: banner.imageUrl,
+        title: banner.title,
+        subtitle: banner.subtitle,
+        description: banner.description,
+        btn_primary: banner.btnPrimary,
+        btn_secondary: banner.btnSecondary,
+      }
+      if (existing?.id) {
+        const { error: err2 } = await sb.from('banner').update(stripped).eq('id', existing.id)
+        if (err2) throw err2
+      } else {
+        const { error: err2 } = await sb.from('banner').insert({ ...stripped, id: 'single' })
+        if (err2) throw err2
+      }
     }
   } catch (e) {
     console.error('Banner save exception:', e)

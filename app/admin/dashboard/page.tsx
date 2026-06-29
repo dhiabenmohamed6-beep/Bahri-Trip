@@ -645,11 +645,14 @@ export default function AdminDashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(b)
       })
-      if (!res.ok) throw new Error('Failed to save banner')
+      if (!res.ok) {
+        const text = await res.text().catch(() => '')
+        throw new Error(text || `Server responded with ${res.status}`)
+      }
       setBannerState(b)
       setBannerModal(false)
-    } catch {
-      alert('Failed to save banner. Please try again.')
+    } catch (e: any) {
+      alert('Failed to save banner: ' + (e?.message || 'Unknown error'))
     }
   }
   
