@@ -252,11 +252,17 @@ export async function getStoredBanner(): Promise<BannerSettings | null> {
     if (error || !data) return null
     return {
       imageUrl: data.image_url,
+      phoneImageUrl: data.phone_image_url ?? '',
       title: data.title,
       subtitle: data.subtitle,
       description: data.description,
       btnPrimary: data.btn_primary,
       btnSecondary: data.btn_secondary,
+      phoneTitle: data.phone_title ?? '',
+      phoneSubtitle: data.phone_subtitle ?? '',
+      phoneDescription: data.phone_description ?? '',
+      phoneBtnPrimary: data.phone_btn_primary ?? '',
+      phoneBtnSecondary: data.phone_btn_secondary ?? '',
     }
   } catch {
     return null
@@ -270,14 +276,22 @@ export async function saveStoredBanner(banner: BannerSettings): Promise<void> {
     return
   }
   try {
-    const { error } = await sb.from('banner').upsert({
+    const data: any = {
+      id: 'single',
       image_url: banner.imageUrl,
       title: banner.title,
       subtitle: banner.subtitle,
       description: banner.description,
       btn_primary: banner.btnPrimary,
       btn_secondary: banner.btnSecondary,
-    })
+    }
+    if (banner.phoneImageUrl) data.phone_image_url = banner.phoneImageUrl
+    if (banner.phoneTitle) data.phone_title = banner.phoneTitle
+    if (banner.phoneSubtitle) data.phone_subtitle = banner.phoneSubtitle
+    if (banner.phoneDescription) data.phone_description = banner.phoneDescription
+    if (banner.phoneBtnPrimary) data.phone_btn_primary = banner.phoneBtnPrimary
+    if (banner.phoneBtnSecondary) data.phone_btn_secondary = banner.phoneBtnSecondary
+    const { error } = await sb.from('banner').upsert(data)
     if (error) console.error('Banner upsert error:', error)
   } catch (e) {
     console.error('Banner save exception:', e)

@@ -252,22 +252,25 @@ function BannerModal({ current, onSave, onClose }: {
 }) {
   const [form, setForm]         = useState<BannerSettings>(current)
   const [cropSrc, setCropSrc]   = useState<string|null>(null)
+  const [cropTarget, setCropTarget] = useState<'imageUrl' | 'phoneImageUrl'>('imageUrl')
   const fileRef                 = useRef<HTMLInputElement>(null)
-  const folderRef               = useRef<HTMLInputElement>(null)
+  const desktopFolderRef        = useRef<HTMLInputElement>(null)
+  const phoneFolderRef          = useRef<HTMLInputElement>(null)
 
   function f(k: keyof BannerSettings, v: string) { setForm(p=>({...p,[k]:v})) }
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files
     if (!files || files.length === 0) return
-    const file = Array.from(files).find(f => f.type.startsWith('image/')) || files[0]
+    const file = Array.from(files).find(f => f.type.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(f.name)) || files[0]
     const reader = new FileReader()
     reader.onload = ev => setCropSrc(ev.target?.result as string)
+    reader.onerror = () => alert('Could not read this file. Please try another image.')
     reader.readAsDataURL(file)
   }
 
   function handleCropDone(dataUrl: string) {
-    f('imageUrl', dataUrl)
+    f(cropTarget, dataUrl)
     setCropSrc(null)
   }
 
@@ -302,13 +305,13 @@ function BannerModal({ current, onSave, onClose }: {
               <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">Background Image</label>
               <div className="flex gap-2 mb-2">
                 <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
-                <input ref={folderRef} type="file" accept="image/*" webkitdirectory="true" directory="" onChange={handleFile} className="hidden" />
+                <input ref={desktopFolderRef} type="file" accept="image/*" webkitdirectory="true" directory="" onChange={handleFile} className="hidden" />
                 <button onClick={()=>fileRef.current?.click()}
                   className="hidden md:flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 flex-shrink-0"
                   style={{ background:'linear-gradient(135deg,#1e3a4c,#0a3d4f)' }}>
                   📁 Choose File
                 </button>
-                <button onClick={()=>folderRef.current?.click()}
+                <button onClick={()=>desktopFolderRef.current?.click()}
                   className="md:hidden flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 flex-shrink-0"
                   style={{ background:'linear-gradient(135deg,#1e3a4c,#0a3d4f)' }}>
                   📁 Choose Folder
@@ -324,6 +327,61 @@ function BannerModal({ current, onSave, onClose }: {
                 </div>
               )}
               <p className="text-[10px] text-slate-400 mt-1">Tip: put your photo in <code className="bg-slate-100 px-1 rounded">public/</code> and type <code className="bg-slate-100 px-1 rounded">/filename.jpg</code></p>
+            </div>
+
+            <div className="border-t border-slate-100 my-2" />
+
+            <div>
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">📱 Phone Banner Image <span className="normal-case tracking-normal">(shows only on mobile)</span></label>
+              <div className="flex gap-2 mb-2">
+                <input ref={phoneFolderRef} type="file" accept="image/*" webkitdirectory="true" directory="" onChange={handleFile} className="hidden" />
+                <button onClick={()=>{ setCropTarget('phoneImageUrl'); phoneFolderRef.current?.click() }}
+                  className="md:hidden flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 flex-shrink-0"
+                  style={{ background:'linear-gradient(135deg,#7c3aed,#6d28d9)' }}>
+                  📁 Choose Folder (Phone)
+                </button>
+                <input value={form.phoneImageUrl.startsWith('data:') ? '(local phone image)' : form.phoneImageUrl}
+                  onChange={e=>{ if(!e.target.value.startsWith('data:')) f('phoneImageUrl',e.target.value) }}
+                  placeholder="or paste URL / /filename.jpg"
+                  className="flex-1 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-400 min-w-0" />
+              </div>
+              {form.phoneImageUrl && (
+                <div className="mt-3 rounded-2xl overflow-hidden border border-slate-200 h-24"
+                  style={{ backgroundImage:`url('${form.phoneImageUrl}')`, backgroundSize:'cover', backgroundPosition:'center' }}>
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/30 to-transparent" />
+                </div>
+              )}
+              <p className="text-[10px] text-slate-400 mt-1">Optional. Leave empty to use the same image as desktop.</p>
+
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <div>
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">Phone Title (white)</label>
+                  <input value={form.phoneTitle} onChange={e=>f('phoneTitle',e.target.value)} placeholder="Discover"
+                    className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-cyan-400" />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">Phone Subtitle (cyan)</label>
+                  <input value={form.phoneSubtitle} onChange={e=>f('phoneSubtitle',e.target.value)} placeholder="the Sea"
+                    className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-cyan-400" />
+                </div>
+              </div>
+              <div className="mt-3">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">Phone Description</label>
+                <textarea value={form.phoneDescription} onChange={e=>f('phoneDescription',e.target.value)} rows={2}
+                  className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-cyan-400 resize-none" />
+              </div>
+              <div className="grid grid-cols-2 gap-4 mt-3">
+                <div>
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">Phone Primary Button</label>
+                  <input value={form.phoneBtnPrimary} onChange={e=>f('phoneBtnPrimary',e.target.value)} placeholder="Book Now"
+                    className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-cyan-400" />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">Phone Secondary Button</label>
+                  <input value={form.phoneBtnSecondary} onChange={e=>f('phoneBtnSecondary',e.target.value)} placeholder="Explore Services"
+                    className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-cyan-400" />
+                </div>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -565,13 +623,18 @@ export default function AdminDashboard() {
   }
   
   async function handleSaveBanner(b: BannerSettings) {
-    await fetch('/api/banner', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(b)
-    })
-    setBannerState(b)
-    setBannerModal(false)
+    try {
+      const res = await fetch('/api/banner', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(b)
+      })
+      if (!res.ok) throw new Error('Failed to save banner')
+      setBannerState(b)
+      setBannerModal(false)
+    } catch {
+      alert('Failed to save banner. Please try again.')
+    }
   }
   
   async function handleSaveService(svc: Service) {

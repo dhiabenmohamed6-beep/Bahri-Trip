@@ -7,6 +7,15 @@ import { useTranslation } from '@/contexts/LanguageContext'
 export default function Hero() {
   const { t } = useTranslation()
   const [banner, setBanner] = useState<BannerSettings>(DEFAULT_BANNER)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const mql = window.matchMedia('(max-width: 768px)')
+    setIsMobile(mql.matches)
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    mql.addEventListener('change', handler)
+    return () => mql.removeEventListener('change', handler)
+  }, [])
 
   useEffect(() => {
     async function loadBanner() {
@@ -24,10 +33,17 @@ export default function Hero() {
     return () => clearInterval(interval)
   }, [])
 
+  const bannerImage = isMobile && banner.phoneImageUrl ? banner.phoneImageUrl : banner.imageUrl
+  const bannerTitle = isMobile && banner.phoneTitle ? banner.phoneTitle : banner.title
+  const bannerSubtitle = isMobile && banner.phoneSubtitle ? banner.phoneSubtitle : banner.subtitle
+  const bannerDescription = isMobile && banner.phoneDescription ? banner.phoneDescription : banner.description
+  const bannerBtnPrimary = isMobile && banner.phoneBtnPrimary ? banner.phoneBtnPrimary : banner.btnPrimary
+  const bannerBtnSecondary = isMobile && banner.phoneBtnSecondary ? banner.phoneBtnSecondary : banner.btnSecondary
+
   return (
     <section id="home" className="relative min-h-screen flex flex-col overflow-hidden">
       <div className="absolute inset-0 bg-cover bg-center transition-all duration-700"
-        style={{ backgroundImage: `url('${banner.imageUrl}')` }} />
+        style={{ backgroundImage: `url('${bannerImage}')` }} />
       <div className="absolute inset-0 bg-gradient-to-b from-[#1e3a4c]/70 via-[#1e3a4c]/40 to-[#1e3a4c]/70" />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pt-28 sm:pt-32 md:pt-40 pb-20 sm:pb-28 md:pb-36 flex-1 flex flex-col justify-center">
@@ -36,18 +52,18 @@ export default function Hero() {
             {t.hero.welcome}
           </p>
           <h1 className="text-[clamp(2.8rem,8vw,7rem)] font-black text-white leading-[0.95] mb-6 sm:mb-8 anim-fade-up font-display" style={{ animationDelay:'.2s' }}>
-            {t.hero.experience}<br />
-            <span className="text-[#7dd3d0]">{t.hero.elHaouaria}</span>
+            {bannerTitle}<br />
+            <span className="text-[#7dd3d0]">{bannerSubtitle}</span>
           </h1>
           <p className="text-white/85 text-base sm:text-xl md:text-2xl max-w-xl leading-relaxed mb-8 sm:mb-10 anim-fade-up" style={{ animationDelay:'.3s' }}>
-            {banner.description}
+            {bannerDescription}
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 anim-fade-up" style={{ animationDelay:'.4s' }}>
             <a href="#booking" className="btn-primary text-center text-sm sm:text-base">
-              {t.hero.reserveNow}
+              {bannerBtnPrimary}
             </a>
             <a href="#about" className="btn-secondary text-center text-sm sm:text-base border-white text-white hover:bg-white hover:text-[#1e3a4c]">
-              {t.hero.discoverMore}
+              {bannerBtnSecondary}
             </a>
           </div>
         </div>

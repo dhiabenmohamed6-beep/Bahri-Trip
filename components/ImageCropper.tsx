@@ -54,8 +54,9 @@ export default function ImageCropper({ src, onDone, onCancel, aspectW = 16, aspe
 
   useEffect(() => {
     const img = new Image()
-    img.crossOrigin = 'anonymous'
+    if (!src.startsWith('data:')) img.crossOrigin = 'anonymous'
     img.onload = () => { imgRef.current = img; setZoom(1); setOffset({ x: 0, y: 0 }) }
+    img.onerror = () => { console.error('Failed to load image:', src) }
     img.src = src
   }, [src])
 
