@@ -1,0 +1,27 @@
+{
+  "name": "aqua-ride",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.106.1",
+    "framer-motion": "^11.0.0",
+    "lucide-react": "^0.454.0",
+    "next": "16.2.8",
+    "nodemailer": "^8.0.10",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "25.9.1",
+    "@types/nodemailer": "6.4.17",
+    "@types/react": "^18.3.0",
+    "autoprefixer": "^10.5.0",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.0.0"
+  }
+}
