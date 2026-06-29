@@ -305,7 +305,7 @@ function BannerModal({ current, onSave, onClose }: {
               <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">Background Image</label>
               <div className="flex gap-2 mb-2">
                 <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
-                <input ref={desktopFolderRef} type="file" accept="image/*" webkitdirectory="true" directory="" onChange={handleFile} className="hidden" />
+                <input ref={desktopFolderRef} type="file" accept="image/*" {...{webkitdirectory:'true',directory:''} as any} onChange={handleFile} className="hidden" />
                 <button onClick={()=>fileRef.current?.click()}
                   className="hidden md:flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 flex-shrink-0"
                   style={{ background:'linear-gradient(135deg,#1e3a4c,#0a3d4f)' }}>
@@ -334,7 +334,7 @@ function BannerModal({ current, onSave, onClose }: {
             <div>
               <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">📱 Phone Banner Image <span className="normal-case tracking-normal">(shows only on mobile)</span></label>
               <div className="flex gap-2 mb-2">
-                <input ref={phoneFolderRef} type="file" accept="image/*" webkitdirectory="true" directory="" onChange={handleFile} className="hidden" />
+                <input ref={phoneFolderRef} type="file" accept="image/*" {...{webkitdirectory:'true',directory:''} as any} onChange={handleFile} className="hidden" />
                 <button onClick={()=>{ setCropTarget('phoneImageUrl'); phoneFolderRef.current?.click() }}
                   className="md:hidden flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 flex-shrink-0"
                   style={{ background:'linear-gradient(135deg,#7c3aed,#6d28d9)' }}>
