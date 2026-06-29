@@ -501,20 +501,6 @@ function ServiceModal({ svc, onSave, onClose }: {
               </div>
             </div>
 
-            <div>
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">Background Image</label>
-              <div className="flex gap-2 mb-2">
-                <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
-                <button onClick={()=>fileRef.current?.click()}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 flex-shrink-0"
-                  style={{ background:'linear-gradient(135deg,#1e3a4c,#0a3d4f)' }}>
-                  📁 Choose Image
-                </button>
-                <input value={form.imageUrl.startsWith('data:') ? '(local image)' : form.imageUrl}
-                  onChange={e=>{ if(!e.target.value.startsWith('data:')) f('imageUrl',e.target.value) }}
-                  placeholder="or paste URL / /filename.jpg"
-                  className="flex-1 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-400 min-w-0" />
-              </div>
             <div className="flex gap-6 flex-wrap">
               <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
                 <input type="checkbox" checked={form.perPerson} onChange={e=>f('perPerson',e.target.checked)} className="accent-cyan-500 w-4 h-4" />
