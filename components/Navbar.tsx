@@ -100,7 +100,7 @@ export default function Navbar() {
           </div>
         </div>
 
-        {menuOpen && (
+          {menuOpen && (
           <div className="md:hidden nav-glass border-t border-[#2d8a9e]/10 px-4 pb-4 anim-fade-up">
             <nav className="flex flex-col gap-1">
               {links.map(l => (
@@ -117,6 +117,9 @@ export default function Navbar() {
                 {resolvePath(l.labelKey)}
                 </a>
               ))}
+              <a href="/admin/login" onClick={() => setMenuOpen(false)} className="block px-4 py-3 rounded-2xl text-sm font-semibold text-[#1e3a4c]/60">
+                {resolvePath('navbar.admin')}
+              </a>
               <a href="#booking" onClick={() => setMenuOpen(false)} className="btn-primary text-center text-sm mt-2">
               {resolvePath('navbar.bookNow')}
               </a>

@@ -26,6 +26,8 @@ function BookingForm() {
   })
   const [showSuccess, setShowSuccess] = useState(false)
   const [submittedPrice, setSubmittedPrice] = useState(0)
+  const [loadingServices, setLoadingServices] = useState(true)
+  const [submitError, setSubmitError] = useState('')
   const searchParams = useSearchParams()
 
   useEffect(() => {
@@ -46,6 +48,8 @@ function BookingForm() {
           ...visible.filter((s: Service) => s.id !== 'full-pack' && s.id !== 'boat-full' && s.id !== 'boat-30min'),
         ]
         setServices(prioritized)
+      } finally {
+        setLoadingServices(false)
       }
     }
     loadServices()
@@ -75,12 +79,17 @@ function BookingForm() {
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
     const { name, value } = e.target
+    setSubmitError('')
     setForm(f => ({ ...f, [name]: (name === 'people' || name === 'hours' || name === 'adults' || name === 'children' || name === 'under5') ? Number(value) : value }))
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!selectedService) return
+    setSubmitError('')
+    if (!selectedService) {
+      setSubmitError('Please select a service to continue.')
+      return
+    }
 
     const normalizedPeople = isFullPack
       ? (form.adults || 0) + (form.children || 0) + (form.under5 || 0)
@@ -98,16 +107,25 @@ function BookingForm() {
       discount: 0,
     }
 
-    await fetch('/api/reservations', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(reservation),
-    })
+    try {
+      const res = await fetch('/api/reservations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(reservation),
+      })
 
-    setSubmittedPrice(calculatedPrice)
-    setForm({ ...form, name: '', phone: '', email: '', message: '' })
-    setShowSuccess(true)
-    setTimeout(() => setShowSuccess(false), 5000)
+      if (!res.ok) {
+        const text = await res.text().catch(() => 'Unknown error')
+        throw new Error(text || `Server responded with ${res.status}`)
+      }
+
+      setSubmittedPrice(calculatedPrice)
+      setForm({ ...form, name: '', phone: '', email: '', message: '' })
+      setShowSuccess(true)
+      setTimeout(() => setShowSuccess(false), 5000)
+    } catch (err: any) {
+      setSubmitError(err?.message || 'Booking failed. Please try again or call us directly.')
+    }
   }
 
   return (
@@ -376,12 +394,18 @@ function BookingForm() {
               )}
             </div>
 
+            {submitError && (
+              <div className="mb-4 p-4 rounded-2xl bg-red-500/20 border border-red-400/30 text-red-200 text-sm">
+                {submitError}
+              </div>
+            )}
             <button
               type="submit"
-              className="w-full h-14 rounded-2xl font-black text-white text-lg transition-all hover:scale-[1.02] active:scale-[.98] shadow-lg shadow-[#2d8a9e]/30 hover:shadow-xl hover:shadow-[#2d8a9e]/40"
+              disabled={loadingServices || !selectedService}
+              className="w-full h-14 rounded-2xl font-black text-white text-lg transition-all hover:scale-[1.02] active:scale-[.98] shadow-lg shadow-[#2d8a9e]/30 hover:shadow-xl hover:shadow-[#2d8a9e]/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               style={{ background: 'linear-gradient(135deg,#1e5f74,#2d8a9e)' }}
             >
-              {t.booking.confirmBooking}
+              {loadingServices ? 'Loading services...' : !selectedService ? 'Please select a service' : t.booking.confirmBooking}
             </button>
           </form>
 
