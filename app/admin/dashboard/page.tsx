@@ -258,11 +258,38 @@ function BannerModal({ current, onSave, onClose }: {
 
   function f(k: keyof BannerSettings, v: string) { setForm(p=>({...p,[k]:v})) }
 
-  function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+  async function resizeImage(dataUrl: string, maxWidth = 1400): Promise<string> {
+    const img = new Image()
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve()
+      img.onerror = () => reject(new Error('Failed to load image'))
+      img.src = dataUrl
+    })
+    if (img.naturalWidth <= maxWidth) return dataUrl
+    const scale = maxWidth / img.naturalWidth
+    const w = maxWidth
+    const h = Math.round(img.naturalHeight * scale)
+    const c = document.createElement('canvas')
+    c.width = w
+    c.height = h
+    const ctx = c.getContext('2d')!
+    ctx.drawImage(img, 0, 0, w, h)
+    return c.toDataURL('image/jpeg', 0.85)
+  }
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
     const reader = new FileReader()
-    reader.onload = ev => setCropSrc(ev.target?.result as string)
+    reader.onload = async ev => {
+      try {
+        const dataUrl = ev.target?.result as string
+        const resized = await resizeImage(dataUrl)
+        setCropSrc(resized)
+      } catch {
+        alert('Could not process this image. Please try another.')
+      }
+    }
     reader.onerror = () => alert('Could not read this file. Please try another image.')
     reader.readAsDataURL(file)
     e.target.value = ''
@@ -328,7 +355,7 @@ function BannerModal({ current, onSave, onClose }: {
             <div>
               <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">📱 Phone Banner Image <span className="normal-case tracking-normal">(shows only on mobile)</span></label>
               <div className="flex gap-2 mb-2">
-                <input ref={phoneInputRef} type="file" accept="image/*" capture="environment" onChange={handleFile} className="hidden" />
+                <input ref={phoneInputRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
                 <button onClick={()=>{ setCropTarget('phoneImageUrl'); phoneInputRef.current?.click() }}
                   className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 flex-shrink-0"
                   style={{ background:'linear-gradient(135deg,#7c3aed,#6d28d9)' }}>
