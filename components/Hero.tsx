@@ -29,8 +29,10 @@ export default function Hero() {
     }
     loadBanner()
 
-    const interval = setInterval(loadBanner, 30000)
-    return () => clearInterval(interval)
+    const interval = setInterval(loadBanner, 5000)
+    const onFocus = () => loadBanner()
+    window.addEventListener('focus', onFocus)
+    return () => { clearInterval(interval); window.removeEventListener('focus', onFocus) }
   }, [])
 
   const bannerImage = isMobile && banner.phoneImageUrl ? banner.phoneImageUrl : banner.imageUrl
