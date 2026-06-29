@@ -254,8 +254,7 @@ function BannerModal({ current, onSave, onClose }: {
   const [cropSrc, setCropSrc]   = useState<string|null>(null)
   const [cropTarget, setCropTarget] = useState<'imageUrl' | 'phoneImageUrl'>('imageUrl')
   const fileRef                 = useRef<HTMLInputElement>(null)
-  const desktopFolderRef        = useRef<HTMLInputElement>(null)
-  const phoneFolderRef          = useRef<HTMLInputElement>(null)
+  const phoneFileRef            = useRef<HTMLInputElement>(null)
 
   function f(k: keyof BannerSettings, v: string) { setForm(p=>({...p,[k]:v})) }
 
@@ -305,16 +304,10 @@ function BannerModal({ current, onSave, onClose }: {
               <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">Background Image</label>
               <div className="flex gap-2 mb-2">
                 <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
-                <input ref={desktopFolderRef} type="file" accept="image/*" {...{webkitdirectory:'true',directory:''} as any} onChange={handleFile} className="hidden" />
                 <button onClick={()=>fileRef.current?.click()}
-                  className="hidden md:flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 flex-shrink-0"
+                  className="md:flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 flex-shrink-0 hidden"
                   style={{ background:'linear-gradient(135deg,#1e3a4c,#0a3d4f)' }}>
                   📁 Choose File
-                </button>
-                <button onClick={()=>desktopFolderRef.current?.click()}
-                  className="md:hidden flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 flex-shrink-0"
-                  style={{ background:'linear-gradient(135deg,#1e3a4c,#0a3d4f)' }}>
-                  📁 Choose Folder
                 </button>
                 <input value={form.imageUrl.startsWith('data:') ? '(local image)' : form.imageUrl}
                   onChange={e=>{ if(!e.target.value.startsWith('data:')) f('imageUrl',e.target.value) }}
@@ -334,11 +327,11 @@ function BannerModal({ current, onSave, onClose }: {
             <div>
               <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">📱 Phone Banner Image <span className="normal-case tracking-normal">(shows only on mobile)</span></label>
               <div className="flex gap-2 mb-2">
-                <input ref={phoneFolderRef} type="file" accept="image/*" {...{webkitdirectory:'true',directory:''} as any} onChange={handleFile} className="hidden" />
-                <button onClick={()=>{ setCropTarget('phoneImageUrl'); phoneFolderRef.current?.click() }}
+                <input ref={phoneFileRef} type="file" accept="image/*" capture="environment" onChange={handleFile} className="hidden" />
+                <button onClick={()=>{ setCropTarget('phoneImageUrl'); phoneFileRef.current?.click() }}
                   className="md:hidden flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 flex-shrink-0"
                   style={{ background:'linear-gradient(135deg,#7c3aed,#6d28d9)' }}>
-                  📁 Choose Folder (Phone)
+                  📱 Take Photo / Choose
                 </button>
                 <input value={form.phoneImageUrl.startsWith('data:') ? '(local phone image)' : form.phoneImageUrl}
                   onChange={e=>{ if(!e.target.value.startsWith('data:')) f('phoneImageUrl',e.target.value) }}
@@ -509,10 +502,19 @@ function ServiceModal({ svc, onSave, onClose }: {
             </div>
 
             <div>
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">Per label</label>
-              <input value={form.per} onChange={e=>f('per',e.target.value)} placeholder="per person"
-                className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-cyan-400" />
-            </div>
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">Background Image</label>
+              <div className="flex gap-2 mb-2">
+                <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
+                <button onClick={()=>fileRef.current?.click()}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 flex-shrink-0"
+                  style={{ background:'linear-gradient(135deg,#1e3a4c,#0a3d4f)' }}>
+                  📁 Choose Image
+                </button>
+                <input value={form.imageUrl.startsWith('data:') ? '(local image)' : form.imageUrl}
+                  onChange={e=>{ if(!e.target.value.startsWith('data:')) f('imageUrl',e.target.value) }}
+                  placeholder="or paste URL / /filename.jpg"
+                  className="flex-1 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-400 min-w-0" />
+              </div>
             <div className="flex gap-6 flex-wrap">
               <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
                 <input type="checkbox" checked={form.perPerson} onChange={e=>f('perPerson',e.target.checked)} className="accent-cyan-500 w-4 h-4" />
