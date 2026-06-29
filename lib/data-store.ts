@@ -276,8 +276,8 @@ export async function saveStoredBanner(banner: BannerSettings): Promise<void> {
     return
   }
   try {
+    const { data: existing } = await sb.from('banner').select('id').limit(1).maybeSingle()
     const data: any = {
-      id: 'single',
       image_url: banner.imageUrl,
       title: banner.title,
       subtitle: banner.subtitle,
@@ -291,9 +291,23 @@ export async function saveStoredBanner(banner: BannerSettings): Promise<void> {
     if (banner.phoneDescription) data.phone_description = banner.phoneDescription
     if (banner.phoneBtnPrimary) data.phone_btn_primary = banner.phoneBtnPrimary
     if (banner.phoneBtnSecondary) data.phone_btn_secondary = banner.phoneBtnSecondary
+    if (existing?.id) data.id = existing.id
     const { error } = await sb.from('banner').upsert(data)
-    if (error) console.error('Banner upsert error:', error)
+    if (error) {
+      const stripped: any = {
+        image_url: banner.imageUrl,
+        title: banner.title,
+        subtitle: banner.subtitle,
+        description: banner.description,
+        btn_primary: banner.btnPrimary,
+        btn_secondary: banner.btnSecondary,
+      }
+      if (existing?.id) stripped.id = existing.id
+      const { error: err2 } = await sb.from('banner').upsert(stripped)
+      if (err2) throw err2
+    }
   } catch (e) {
     console.error('Banner save exception:', e)
+    throw e
   }
 }
