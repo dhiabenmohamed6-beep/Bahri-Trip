@@ -13,20 +13,19 @@ interface Props {
 export default function ImageCropper({ src, onDone, onCancel, aspectW = 16, aspectH = 9 }: Props) {
   const canvasRef  = useRef<HTMLCanvasElement>(null)
   const imgRef     = useRef<HTMLImageElement | null>(null)
+  const [imgVersion, setImgVersion] = useState(0)
 
   const [zoom, setZoom]     = useState(1)
   const [offset, setOffset] = useState({ x: 0, y: 0 })
   const [dragging, setDragging] = useState(false)
   const dragStart = useRef({ mx: 0, my: 0, ox: 0, oy: 0 })
 
-  // canvas display size
   const CW = 560
   const CH = Math.round(CW * aspectH / aspectW)
 
-  // draw whenever zoom/offset/src changes
   const draw = useCallback(() => {
     const canvas = canvasRef.current
-    const img    = imgRef.current
+    const img = imgRef.current
     if (!canvas || !img) return
     const ctx = canvas.getContext('2d')!
     ctx.clearRect(0, 0, CW, CH)
@@ -35,7 +34,6 @@ export default function ImageCropper({ src, onDone, onCancel, aspectW = 16, aspe
     const sw = img.naturalWidth  * scale
     const sh = img.naturalHeight * scale
 
-    // clamp offset so image always covers canvas
     const minX = CW - sw
     const minY = CH - sh
     const ox = Math.min(0, Math.max(minX, offset.x))
@@ -43,21 +41,22 @@ export default function ImageCropper({ src, onDone, onCancel, aspectW = 16, aspe
 
     ctx.drawImage(img, ox, oy, sw, sh)
 
-    // grid overlay
     ctx.strokeStyle = 'rgba(255,255,255,.25)'
     ctx.lineWidth = 1
     for (let i = 1; i < 3; i++) {
       ctx.beginPath(); ctx.moveTo(CW * i / 3, 0); ctx.lineTo(CW * i / 3, CH); ctx.stroke()
       ctx.beginPath(); ctx.moveTo(0, CH * i / 3); ctx.lineTo(CW, CH * i / 3); ctx.stroke()
     }
-  }, [zoom, offset, CW, CH])
+  }, [zoom, offset, CW, CH, imgVersion])
 
   useEffect(() => {
     const img = new Image()
     if (!src.startsWith('data:')) img.crossOrigin = 'anonymous'
     img.onload = () => {
       imgRef.current = img
+      setZoom(1)
       setOffset({ x: 0, y: 0 })
+      setImgVersion(v => v + 1)
     }
     img.onerror = () => { console.error('Failed to load image:', src) }
     img.src = src
