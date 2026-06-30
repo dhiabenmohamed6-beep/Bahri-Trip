@@ -10,154 +10,84 @@ interface Props {
   aspectH?: number
 }
 
-export default function ImageCropper({ src, onDone, onCancel, aspectW = 16, aspectH = 9 }: Props) {
-  const canvasRef  = useRef<HTMLCanvasElement>(null)
-  const imgRef     = useRef<HTMLImageElement | null>(null)
-  const [imgVersion, setImgVersion] = useState(0)
+export default function ImageCropper({ src, onDone, onCancel, aspectW = 1, aspectH = 1 }: Props) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const imgRef = useRef<HTMLImageElement | null>(null)
+  const [imageLoaded, setImageLoaded] = useState(false)
 
-  const [zoom, setZoom]     = useState(1)
-  const [offset, setOffset] = useState({ x: 0, y: 0 })
-  const [dragging, setDragging] = useState(false)
-  const dragStart = useRef({ mx: 0, my: 0, ox: 0, oy: 0 })
+  const maxDisplayW = 560
+  const maxDisplayH = 420
 
-  const CW = 560
-  const CH = Math.round(CW * aspectH / aspectW)
-
-  const draw = useCallback(() => {
+  function draw() {
     const canvas = canvasRef.current
     const img = imgRef.current
     if (!canvas || !img) return
-    const ctx = canvas.getContext('2d')!
-    ctx.clearRect(0, 0, CW, CH)
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
 
-    const scale = Math.max(CW / img.naturalWidth, CH / img.naturalHeight) * zoom
-    const sw = img.naturalWidth  * scale
-    const sh = img.naturalHeight * scale
-
-    const minX = CW - sw
-    const minY = CH - sh
-    const ox = Math.min(0, Math.max(minX, offset.x))
-    const oy = Math.min(0, Math.max(minY, offset.y))
-
-    ctx.drawImage(img, ox, oy, sw, sh)
-
-    ctx.strokeStyle = 'rgba(255,255,255,.25)'
-    ctx.lineWidth = 1
-    for (let i = 1; i < 3; i++) {
-      ctx.beginPath(); ctx.moveTo(CW * i / 3, 0); ctx.lineTo(CW * i / 3, CH); ctx.stroke()
-      ctx.beginPath(); ctx.moveTo(0, CH * i / 3); ctx.lineTo(CW, CH * i / 3); ctx.stroke()
+    const targetRatio = aspectW / aspectH
+    const imgRatio = img.naturalWidth / img.naturalHeight
+    let cw, ch
+    if (imgRatio > targetRatio) {
+      cw = Math.min(img.naturalWidth, maxDisplayW)
+      ch = cw / targetRatio
+    } else {
+      ch = Math.min(img.naturalHeight, maxDisplayH)
+      cw = ch * targetRatio
     }
-  }, [zoom, offset, CW, CH, imgVersion])
+
+    canvas.width = cw
+    canvas.height = ch
+    ctx.clearRect(0, 0, cw, ch)
+    ctx.drawImage(img, 0, 0, cw, ch)
+  }
 
   useEffect(() => {
+    setImageLoaded(false)
     const img = new Image()
-    if (!src.startsWith('data:')) img.crossOrigin = 'anonymous'
     img.onload = () => {
       imgRef.current = img
-      setZoom(1)
-      setOffset({ x: 0, y: 0 })
-      setImgVersion(v => v + 1)
+      setImageLoaded(true)
     }
-    img.onerror = () => { console.error('Failed to load image:', src) }
+    img.onerror = () => console.error('Failed to load image:', src)
     img.src = src
-    return () => { img.onload = null; img.onerror = null }
+    return () => {
+      img.onload = null
+      img.onerror = null
+    }
   }, [src])
 
-  useEffect(() => { draw() }, [draw])
-
-  // mouse drag
-  function onMouseDown(e: React.MouseEvent) {
-    setDragging(true)
-    dragStart.current = { mx: e.clientX, my: e.clientY, ox: offset.x, oy: offset.y }
-  }
-  function onMouseMove(e: React.MouseEvent) {
-    if (!dragging) return
-    const dx = e.clientX - dragStart.current.mx
-    const dy = e.clientY - dragStart.current.my
-    setOffset({ x: dragStart.current.ox + dx, y: dragStart.current.oy + dy })
-  }
-  function onMouseUp() { setDragging(false) }
-
-  // touch drag
-  function onTouchStart(e: React.TouchEvent) {
-    const t = e.touches[0]
-    setDragging(true)
-    dragStart.current = { mx: t.clientX, my: t.clientY, ox: offset.x, oy: offset.y }
-  }
-  function onTouchMove(e: React.TouchEvent) {
-    if (!dragging) return
-    const t = e.touches[0]
-    const dx = t.clientX - dragStart.current.mx
-    const dy = t.clientY - dragStart.current.my
-    setOffset({ x: dragStart.current.ox + dx, y: dragStart.current.oy + dy })
-  }
+  useEffect(() => {
+    if (imageLoaded) draw()
+  }, [imageLoaded])
 
   function handleDone() {
     const canvas = canvasRef.current
-    const img    = imgRef.current
-    if (!canvas || !img) return
-
-    // render at full 1920×1080
-    const out = document.createElement('canvas')
-    out.width  = 1920
-    out.height = Math.round(1920 * aspectH / aspectW)
-    const ctx  = out.getContext('2d')!
-
-    const scale = Math.max(CW / img.naturalWidth, CH / img.naturalHeight) * zoom
-    const sw = img.naturalWidth  * scale
-    const sh = img.naturalHeight * scale
-    const minX = CW - sw; const minY = CH - sh
-    const ox = Math.min(0, Math.max(minX, offset.x))
-    const oy = Math.min(0, Math.max(minY, offset.y))
-
-    const ratio = out.width / CW
-    ctx.drawImage(img, ox * ratio, oy * ratio, sw * ratio, sh * ratio)
-    onDone(out.toDataURL('image/jpeg', 0.92))
+    if (canvas) {
+      onDone(canvas.toDataURL('image/jpeg', 0.9))
+    } else {
+      onDone(src)
+    }
   }
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center px-4 bg-black/70 backdrop-blur-sm">
-      <div className="bg-white rounded-[28px] shadow-2xl p-6 w-full max-w-2xl" style={{ animation:'popIn .3s cubic-bezier(.34,1.56,.64,1) both' }}>
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={onCancel}>
+      <div className="bg-white rounded-[28px] shadow-2xl p-6 w-full max-w-2xl mx-4" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-xl font-black text-slate-800">Crop & Resize Image</h3>
-            <p className="text-slate-400 text-xs mt-0.5">Drag to reposition · Zoom slider to resize</p>
-          </div>
-          <button onClick={onCancel} className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 text-xl transition-colors">×</button>
+          <h3 className="text-xl font-black text-[#1e3a4c]">Adjust Photo</h3>
+          <button onClick={onCancel} className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-[#1e3a4c]/60 text-lg">×</button>
         </div>
 
-        {/* Canvas */}
-        <div className="relative rounded-2xl overflow-hidden border-2 border-slate-200 cursor-grab active:cursor-grabbing mb-4"
-          style={{ width: CW, maxWidth: '100%', aspectRatio: `${aspectW}/${aspectH}` }}>
-          <canvas
-            ref={canvasRef}
-            width={CW} height={CH}
-            className="w-full h-full block"
-            onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onMouseLeave={onMouseUp}
-            onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onMouseUp}
-          />
+        <div className="flex justify-center rounded-2xl overflow-hidden bg-slate-100 min-h-[200px]">
+          {!imageLoaded && (
+            <div className="flex items-center justify-center h-[200px] text-slate-400 text-sm">Loading image...</div>
+          )}
+          <canvas ref={canvasRef} className={`${imageLoaded ? 'block' : 'hidden'} max-w-full h-auto`} />
         </div>
 
-        {/* Zoom */}
-        <div className="flex items-center gap-4 mb-5">
-          <span className="text-slate-400 text-sm w-10 text-center">🔍−</span>
-          <input type="range" min={1} max={3} step={0.01} value={zoom}
-            onChange={e => setZoom(Number(e.target.value))}
-            className="flex-1 accent-cyan-500" />
-          <span className="text-slate-400 text-sm w-10 text-center">🔍+</span>
-          <span className="text-cyan-500 font-bold text-sm w-12 text-right">{Math.round(zoom * 100)}%</span>
-        </div>
-
-        <div className="flex gap-3">
-          <button onClick={onCancel}
-            className="flex-1 py-3 rounded-xl font-bold text-sm text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors">
-            Cancel
-          </button>
-          <button onClick={handleDone}
-            className="flex-1 py-3 rounded-xl font-bold text-sm text-white transition-all hover:opacity-90"
-            style={{ background:'linear-gradient(135deg,#06b6d4,#0891b2)' }}>
-            Use This Image ✓
-          </button>
+        <div className="flex gap-3 mt-4">
+          <button onClick={onCancel} className="flex-1 py-3 rounded-xl font-bold text-[#1e3a4c] bg-slate-100 hover:bg-slate-200 transition-colors">Cancel</button>
+          <button onClick={handleDone} className="flex-1 py-3 rounded-xl font-bold text-white transition-opacity hover:opacity-90" style={{ background:'linear-gradient(135deg,#06b6d4,#2d8a9e)' }}>Save</button>
         </div>
       </div>
     </div>
