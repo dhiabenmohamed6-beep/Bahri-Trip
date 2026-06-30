@@ -49,7 +49,7 @@ export default function Hero() {
       <div className="absolute inset-0 bg-gradient-to-b from-[#1e3a4c]/70 via-[#1e3a4c]/40 to-[#1e3a4c]/70" />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pt-28 sm:pt-32 md:pt-40 pb-20 sm:pb-28 md:pb-36 flex-1 flex flex-col justify-center">
-        <div className="max-w-3xl">
+        <div className="max-w-3xl ml-auto text-right">
           <p className="uppercase tracking-[4px] sm:tracking-[6px] text-[#f0c27a] text-xs sm:text-sm mb-4 sm:mb-6 anim-fade-up font-semibold" style={{ animationDelay:'.1s' }}>
             {t.hero.welcome}
           </p>
@@ -60,7 +60,7 @@ export default function Hero() {
           <p className="text-white/85 text-base sm:text-xl md:text-2xl max-w-xl leading-relaxed mb-8 sm:mb-10 anim-fade-up" style={{ animationDelay:'.3s' }}>
             {bannerDescription}
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 anim-fade-up" style={{ animationDelay:'.4s' }}>
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 anim-fade-up sm:justify-end" style={{ animationDelay:'.4s' }}>
             <a href="#booking" className="btn-primary text-center text-sm sm:text-base">
               {bannerBtnPrimary}
             </a>
